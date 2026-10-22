@@ -1,30 +1,47 @@
-app_code = '''import os
-from google import genai
-from google.colab import userdata
 
-# Initialize the client
-api_key = userdata.get('ai_powered_study_assistant.ipynb')
-client = genai.Client(api_key=api_key)
+import streamlit as st
+from google import genai
+
+st.set_page_config(
+    page_title="AI Powered Study Assistant",
+    page_icon="🎓"
+)
+
+st.title("🎓 AI Powered Study Assistant")
+st.write("Ask questions and learn in simple English!")
+
+# Read API key from Streamlit Secrets
+try:
+    api_key = st.secrets["AQ.Ab8RN6I124Z5Hm9gDVVI89AeJIYO4woBE1mOHhRc_iEH9oL90Q"]
+    client = genai.Client(api_key=api_key)
+except Exception:
+    st.error("Please configure GEMINI_API_KEY in Streamlit Secrets.")
+    st.stop()
+
 
 def study_assistant(user_prompt):
-    """
-    Sends a prompt to the Gemini model and gets a response.
-    """
     response = client.models.generate_content(
-        model="gemini-3.5-flash-lite",
+        model="gemini-2.5-flash",
         contents=user_prompt
     )
     return response.text
 
-if __name__ == '__main__':
-    user_question = "Explain Generative AI in simple terms"
-    print(f"Prompt: {user_question}\n")
-    result = study_assistant(user_question)
-    print("Response:")
-    print(result)
-'''
 
-with open('app.py', 'w') as f:
-    f.write(app_code)
+user_question = st.text_area(
+    "Enter your question",
+    placeholder="Explain Generative AI in simple terms"
+)
 
-print("app.py has been successfully written to the local directory!")
+if st.button("Get Answer"):
+    if user_question.strip():
+        try:
+            with st.spinner("Generating answer..."):
+                result = study_assistant(user_question)
+
+            st.subheader("Answer")
+            st.write(result)
+
+        except Exception as e:
+            st.error(f"Unable to generate answer: {e}")
+    else:
+        st.warning("Please enter a question.")
